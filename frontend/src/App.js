@@ -1,16 +1,20 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import Homepage from './pages/Homepage.js';
-import Navbar from './components/Navbar.js';
+import Login from './pages/Login/Login.js';
+import Signup from './pages/Signup/Signup.js';
+// import Navbar from './components/Navbar.js';
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="pages">
         <Routes>
           <Route path="/" element={<Homepage />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
         </Routes>
       </div>
       </BrowserRouter>
