@@ -22,7 +22,7 @@ const app = express()
 // })
 app.use(helmet())                         
 app.use(cors({                            
-  origin: ['http://localhost:4000', 'https://your-frontend.com'], // need to change to match our frontend
+  origin: ['http://localhost:4000', 'http://localhost:3000'], // need to change to match our frontend
   credentials: true                       
 }))
 

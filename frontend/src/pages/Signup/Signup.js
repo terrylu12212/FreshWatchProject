@@ -1,33 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "./Signup.css";
 
 const Signup = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setEmailError("");
+    setPasswordError("");
 
-    let valid = true;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
 
-    if (e.target.email.value === "duplicate@email.com") {
-      setEmailError("Duplicate Email");
-      valid = false;
-    } else {
-      setEmailError("");
-    }
-
-    if (e.target.password.value.length < 6) {
-      setPasswordError("Invalid Password");
-      valid = false;
-    } else {
-      setPasswordError("");
-    }
-
-    if (valid) {
-      alert("Account Created!");
+    try {
+      const res = await fetch('http://localhost:4000/api/user/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password})
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error || "Signup failed");
+      } else {
+        // Redirect to login page after successful signup
+        navigate('/login');
+      }
+    } catch (err) {
+      setEmailError("Network error");
     }
   };
+  // Redirect to main page if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/");
+    }
+  }, [navigate]);
 
   return (
     <div className="account-container">
