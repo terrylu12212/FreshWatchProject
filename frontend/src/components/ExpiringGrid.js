@@ -16,7 +16,7 @@ function FoodTile({ name, note, imageSrc }){
 export default function ExpiringGrid({ items=[] }){
   return (
     <>
-      <div className="section-title">Expiring Soon</div>
+      <div className="section-title" style={{fontSize: 45, marginTop: '75px'}}>Expiring Soon</div>
       <div className="grid" style={{gridTemplateColumns:"repeat(3, 1fr)"}}>
         {items.slice(0,3).map(i=>(
           <FoodTile key={i._id || i.name} name={i.name} note={i.note} imageSrc={i.imageSrc}/>

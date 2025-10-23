@@ -1,4 +1,5 @@
 import React from "react";
+import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 
 function Row({ label, status }){
   const right = status === "Expired" ? "▶" : "›";
@@ -16,13 +17,35 @@ function Row({ label, status }){
 export default function PantryList({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery}){
   return (
     <>
-      <div className="section-title">Pantry</div>
+      <div className="section-title" style={{marginTop: '45px', fontSize:45}}>Pantry</div>
       <div className="row" style={{gap:12}}>
         <div style={{flex:1}}><SearchBar value={query} onChange={onQuery} placeholder="Search"/></div>
-        <div>
-          <button className="btn ghost" onClick={()=>onSortChange(sort==="expiration" ? "category" : "expiration")}>
-            Sort by: {sort==="expiration" ? "Expiration" : "Category"}
-          </button>
+        <div style={{minWidth: 200}}>
+          <FormControl fullWidth>
+            <InputLabel id="sort-select-label">Sort by</InputLabel>
+            <Select
+              labelId="sort-select-label"
+              id="sort-select"
+              value={sort}
+              label="Sort by"
+              onChange={(e) => onSortChange(e.target.value)}
+               sx={{
+                 '& .MuiOutlinedInput-notchedOutline': {
+                   borderWidth: '2px',
+                 },
+                 '&:hover .MuiOutlinedInput-notchedOutline': {
+                   borderWidth: '2px',
+                 },
+                 '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                   borderWidth: '2px',
+                 },
+                 height: '45px',
+               }}
+            >
+              <MenuItem value="expiration">Expiration</MenuItem>
+              <MenuItem value="category">Category</MenuItem>
+            </Select>
+          </FormControl>
         </div>
       </div>
 

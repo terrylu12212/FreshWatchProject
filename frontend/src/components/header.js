@@ -2,7 +2,7 @@ import React from "react";
 
 export default function Header(){
   return (
-    <header style={{paddingTop: 18, paddingBottom: 0, width:"100%"}}>
+    <header style={{paddingTop: 18, paddingBottom: 0, width:"100%", background:"#fff", boxShadow:"0 2px 4px rgba(0,0,0,0.1)"}}>
       <nav className="row" style={{justifyContent: 'space-between', padding: 20}}>
         <div className="row" style={{gap:14}}>
           <span style={{

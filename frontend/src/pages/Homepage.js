@@ -65,15 +65,37 @@ const Homepage = () => {
   }, [pantry, query, sort]);
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#e4d8d0ff' }}>
+    <div
+      style={{
+        minHeight: '100vh',
+        // Green → black gradient background
+        background: 'linear-gradient(150deg, #32ba88ff 0%, #059669 35%, #065F46 60%, #000000 100%)'
+      }}
+    >
       <Header onLogout={handleLogout} />
 
+      {/* Glassy, semi-transparent content wrapper */}
+      <div
+        className="container"
+        style={{
+          marginTop: 16,
+          marginBottom: 24,
+          padding: '24px 24px 40px',
+          background: 'transparent',
+          borderRadius: 16,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+          border: '1px solid rgba(255,255,255,0.18)',
+          backdropFilter: 'saturate(120%) blur(8px)',
+          WebkitBackdropFilter: 'saturate(120%) blur(8px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.33)',
+        }}
+      >
       <main className="container" style={{ marginTop: 4 }}>
-        <h1 style={{ fontSize: 36, margin: '6px 0 20px' }}>
+        <h1 style={{ fontSize: 45, margin: '20px 0 20px', textAlign: 'center' }}>
           Hi Landon, here's what's fresh<br /> in your pantry today <span role="img" aria-label="leaf">🌿</span>
         </h1>
 
-        <div className="row" style={{ gap: 14, flexWrap: 'wrap' }}>
+        <div className="row" style={{ gap: 25, flexWrap: 'wrap', marginTop: 100 }}>
           <StatCard tone="red" value={`${stats.expiringSoon} items expiring`} label="in the next 3 days" />
           <StatCard tone="green" value={`${stats.fresh} items`} label="fresh" />
           <StatCard tone="tan" value={`${stats.expired} items`} label="expired" />
@@ -91,6 +113,7 @@ const Homepage = () => {
 
         <MealIdeas recipes={recipes} />
       </main>
+      </div>
     </div>
   );
 };
