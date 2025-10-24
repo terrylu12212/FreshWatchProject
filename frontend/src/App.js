@@ -5,7 +5,8 @@ import './styles/global.css';
 import Homepage from './pages/Homepage.js';
 import Login from './pages/Login/Login.js';
 import Signup from './pages/Signup/Signup.js';
-import Navbar from './components/Navbar.js';
+// import Navbar from './components/Navbar.js';
+import Pantry from './pages/Pantry/Pantry.js';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/" element={<Homepage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/pantry" element={<Pantry />} />
           </Routes>
         </div>
       </BrowserRouter>

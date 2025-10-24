@@ -62,9 +62,9 @@ ul{list-style:none; padding:0; margin:0}
   display:flex; align-items:center; justify-content:center;
   min-width: 160px;
 }
-.badge.red{ background:#ffe9e3; color:#8a2d1f;}
-.badge.green{ background:#e9f7ee; color:#205b38;}
-.badge.tan{ background:#efe9db; color:#524736;}
+.badge.red{ background: linear-gradient(135deg, #ff7878 0%, #ff6b6b 100%); color: #fff; box-shadow: 0 4px 14px rgba(255, 151, 151, 0.22);}
+.badge.green{ background: linear-gradient(135deg, #64e677 0%, #5dd671 100%); color: #fff; box-shadow: 0 4px 14px rgba(123, 230, 139, 0.22);}
+.badge.tan{ background: linear-gradient(135deg, #ffe16a 0%, #ffd966 100%); color: #fff; box-shadow: 0 4px 14px rgba(255, 230, 128, 0.22);}
 
 .input{
   width:100%;

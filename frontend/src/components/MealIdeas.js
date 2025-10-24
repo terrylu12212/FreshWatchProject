@@ -65,7 +65,7 @@ export default function MealIdeas({ recipes = [] }) {
             height: 45
           }}
         >
-          See more recipes
+          Generate / View Recipes
         </a>
       </div>
 

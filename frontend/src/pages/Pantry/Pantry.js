@@ -1,40 +1,20 @@
-// src/pages/Homepage.js
+// src/pages/Pantry/Pantry.js
 import React, { useEffect, useMemo, useState } from 'react';
-import '../styles/global.css';
-import Header from '../components/header.js';
-import StatCard from '../components/Statcard.js';
-import ExpiringGrid from '../components/ExpiringGrid.js';
-import PantryList from '../components/PantryList.js';
-import MealIdeas from '../components/MealIdeas.js';
+import '../../styles/global.css';
+import Header from '../../components/header.js';
+import PantryList from '../../components/PantryList.js';
 
-const Homepage = () => {
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
-  };
-
-  const [stats, setStats] = useState({ expiringSoon: 3, fresh: 10, expired: 2 });
-  const [expiring, setExpiring] = useState([]);
+export default function Pantry() {
   const [pantry, setPantry] = useState([]);
-  const [recipes, setRecipes] = useState([]);
-
   const [sort, setSort] = useState('expiration');
   const [query, setQuery] = useState('');
 
+  // Simple add-item form state
+  const [newName, setNewName] = useState('');
+  const [newStatus, setNewStatus] = useState('Fresh');
+
   useEffect(() => {
-    // Replace with real API calls when you’re ready:
-    // fetch('/api/stats', { headers: { Authorization: `Bearer ${token}` }}).then(r=>r.json()).then(setStats)
-    // fetch('/api/pantry').then(r=>r.json()).then(setPantry)
-    // fetch('/api/recipes?limit=3').then(r=>r.json()).then(setRecipes)
-
-    setStats({ expiringSoon: 3, fresh: 10, expired: 2 });
-
-    setExpiring([
-      { name: 'Tomato', note: 'Expires in 2 days', imageSrc: '/images/tomato.png' },
-      { name: 'Yogurt', note: 'Expires tomorrow', imageSrc: '/images/yogurt.png' },
-      { name: 'Spinach', note: 'Expires today!', imageSrc: '/images/spinach.png' },
-    ]);
-
+    // Seed with same style of dummy data as Homepage
     setPantry([
       { name: 'Milk', status: 'Expired' },
       { name: 'Tomato', status: 'Expires in 2 days' },
@@ -78,12 +58,6 @@ const Homepage = () => {
       { name: 'Avocado', status: 'Expires tomorrow' },
       { name: 'Kale', status: 'Expires in 3 days' },
     ]);
-
-    setRecipes([
-      { id: 1, title: 'Spinach Omelette', image: '/images/omelette.jpg' },
-      { id: 2, title: 'Tomato Pasta', image: '/images/tomato-pasta.jpg' },
-      { id: 3, title: 'Tomato Pasta', image: '/images/tomato-pasta-2.jpg' },
-    ]);
   }, []);
 
   const filteredPantry = useMemo(() => {
@@ -92,7 +66,7 @@ const Homepage = () => {
     if (sort === 'expiration') {
       const rank = s =>
         s === 'Expired' ? 0 :
-        s.startsWith('Expires') ? 1 :
+        (s || '').startsWith('Expires') ? 1 :
         2;
       data = data.slice().sort((a, b) => rank(a.status) - rank(b.status));
     } else {
@@ -100,6 +74,15 @@ const Homepage = () => {
     }
     return data;
   }, [pantry, query, sort]);
+
+  const onSubmitAdd = (e) => {
+    e.preventDefault();
+    const name = newName.trim();
+    if (!name) return;
+    setPantry(prev => [{ name, status: newStatus }, ...prev]);
+    setNewName('');
+    setNewStatus('Fresh');
+  };
 
   return (
     <div
@@ -113,9 +96,8 @@ const Homepage = () => {
         backgroundAttachment: 'fixed'
       }}
     >
-      <Header onLogout={handleLogout} />
+      <Header />
 
-      {/* Dark, semi-transparent content wrapper over the background image */}
       <div
         className="container"
         style={{
@@ -131,31 +113,47 @@ const Homepage = () => {
         }}
       >
         <main className="container" style={{ marginTop: 4 }}>
-          <h1 style={{ fontSize: 45, margin: '20px 0 20px', textAlign: 'center' }}>
-            Hi Landon, here's what's fresh<br /> in your pantry today <span role="img" aria-label="leaf">🌿</span>
+          <h1 style={{ fontSize: 42, margin: '20px 0 20px', textAlign: 'center' }}>
+            Your Pantry
           </h1>
 
-          <div className="row" style={{ gap: 25, flexWrap: 'wrap', marginTop: 100 }}>
-            <StatCard tone="red" value={`${stats.expiringSoon} items expiring`} label="in the next 3 days" />
-            <StatCard tone="green" value={`${stats.fresh} items`} label="fresh" />
-            <StatCard tone="tan" value={`${stats.expired} items`} label="expired" />
+          {/* Add Item form */}
+          <form onSubmit={onSubmitAdd} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input
+              className="input"
+              style={{ maxWidth: 360 }}
+              placeholder="Item name (e.g., Milk)"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+            />
+            <select
+              className="input"
+              style={{ maxWidth: 220, height: 44 }}
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value)}
+            >
+              <option value="Fresh">Fresh</option>
+              <option value="Expires tomorrow">Expires tomorrow</option>
+              <option value="Expires today!">Expires today!</option>
+              <option value="Expires in 2 days">Expires in 2 days</option>
+              <option value="Expires in 3 days">Expires in 3 days</option>
+              <option value="Expired">Expired</option>
+            </select>
+            <button type="submit" className="btn">+ Add</button>
+          </form>
+
+          {/* Full Pantry List */}
+          <div style={{ marginTop: 20 }}>
+            <PantryList
+              items={filteredPantry}
+              sort={sort}
+              onSortChange={setSort}
+              query={query}
+              onQuery={setQuery}
+            />
           </div>
-
-          <ExpiringGrid items={expiring} />
-
-          <PantryList
-            items={filteredPantry}
-            sort={sort}
-            onSortChange={setSort}
-            query={query}
-            onQuery={setQuery}
-          />
-
-          <MealIdeas recipes={recipes} />
         </main>
       </div>
     </div>
   );
-};
-
-export default Homepage;
+}
