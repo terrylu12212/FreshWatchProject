@@ -2,16 +2,22 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import '../../styles/global.css';
 import Header from '../../components/header.js';
-import PantryList from '../../components/PantryList.js';
+import MainPantry from '../../components/MainPantry.js';
 
 export default function Pantry() {
   const [pantry, setPantry] = useState([]);
   const [sort, setSort] = useState('expiration');
   const [query, setQuery] = useState('');
 
-  // Simple add-item form state
+  // Add-item form state
   const [newName, setNewName] = useState('');
-  const [newStatus, setNewStatus] = useState('Fresh');
+  const [newCategory, setNewCategory] = useState('Produce');
+  const [expirationWeeks, setExpirationWeeks] = useState(0);
+  const [expirationDays, setExpirationDays] = useState(0);
+
+  // Autocomplete UI state
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 
   useEffect(() => {
     // Seed with same style of dummy data as Homepage
@@ -64,24 +70,126 @@ export default function Pantry() {
     const q = query.trim().toLowerCase();
     let data = pantry.filter(i => !q || i.name.toLowerCase().includes(q));
     if (sort === 'expiration') {
-      const rank = s =>
-        s === 'Expired' ? 0 :
-        (s || '').startsWith('Expires') ? 1 :
-        2;
-      data = data.slice().sort((a, b) => rank(a.status) - rank(b.status));
+      const daysUntil = (s = '') => {
+        if (s === 'Expired') return -1; // already expired
+        if (s === 'Expires today!') return 0;
+        if (s === 'Expires tomorrow') return 1;
+        const m = s.match(/Expires in (\d+) days?/);
+        if (m) return parseInt(m[1], 10);
+        return 9999; // treat other statuses (e.g., Fresh) as farthest
+      };
+      data = data
+        .slice()
+        .sort((a, b) => {
+          const da = daysUntil(a.status);
+          const db = daysUntil(b.status);
+          if (da !== db) return da - db; // closest first
+          return a.name.localeCompare(b.name);
+        });
     } else {
       data = data.slice().sort((a, b) => a.name.localeCompare(b.name));
     }
     return data;
   }, [pantry, query, sort]);
 
-  const onSubmitAdd = (e) => {
+  const onSubmitAdd = async (e) => {
     e.preventDefault();
     const name = newName.trim();
     if (!name) return;
-    setPantry(prev => [{ name, status: newStatus }, ...prev]);
+    
+    // Calculate total days
+    const totalDays = (expirationWeeks * 7) + expirationDays;
+    
+    // Generate status text
+    let status = 'Fresh';
+    if (totalDays === 0) {
+      status = 'Expires today!';
+    } else if (totalDays === 1) {
+      status = 'Expires tomorrow';
+    } else if (totalDays > 1) {
+      status = `Expires in ${totalDays} days`;
+    }
+    
+    // Save to backend food template
+    try {
+      const token = localStorage.getItem('token');
+      await fetch('http://localhost:4000/api/food-templates', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name,
+          category: newCategory,
+          defaultWeeks: expirationWeeks,
+          defaultDays: expirationDays
+        })
+      });
+    } catch (error) {
+      console.error('Failed to save food template:', error);
+    }
+    
+    setPantry(prev => [{ name, status, category: newCategory }, ...prev]);
     setNewName('');
-    setNewStatus('Fresh');
+    setNewCategory('Produce');
+    setExpirationWeeks(0);
+    setExpirationDays(0);
+    setShowSuggestions(false);
+  };
+
+  // Handle name input change with autocomplete from backend
+  const handleNameChange = async (value) => {
+    setNewName(value);
+    
+    if (value.trim().length > 0) {
+      try {
+        const token = localStorage.getItem('token');
+        console.log('🔍 Searching for:', value.trim());
+        console.log('🔑 Token exists:', !!token);
+        console.log('🔑 Token value:', token);
+        
+        const url = `http://localhost:4000/api/food-templates?search=${encodeURIComponent(value.trim())}`;
+        console.log('📡 Fetching URL:', url);
+        
+        const response = await fetch(url, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (response.ok) {
+          const templates = await response.json();
+          console.log('✅ Templates found:', templates);
+          console.log('✅ Templates count:', templates.length);
+          setFilteredSuggestions(templates);
+          setShowSuggestions(templates.length > 0);
+          console.log('✅ showSuggestions set to:', templates.length > 0);
+        } else {
+          const errorText = await response.text();
+          console.error('❌ Response not OK:', response.status, response.statusText, errorText);
+          setShowSuggestions(false);
+        }
+      } catch (error) {
+        console.error('❌ Failed to fetch food templates:', error);
+        setShowSuggestions(false);
+      }
+    } else {
+      console.log('⚠️ Value is empty, hiding suggestions');
+      setShowSuggestions(false);
+      setFilteredSuggestions([]);
+    }
+  };
+
+  // Auto-fill form when suggestion is selected
+  const selectSuggestion = (food) => {
+    setNewName(food.name);
+    setNewCategory(food.category);
+    setExpirationWeeks(food.defaultWeeks);
+    setExpirationDays(food.defaultDays);
+    setShowSuggestions(false);
   };
 
   return (
@@ -118,33 +226,154 @@ export default function Pantry() {
           </h1>
 
           {/* Add Item form */}
-          <form onSubmit={onSubmitAdd} style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input
-              className="input"
-              style={{ maxWidth: 360 }}
-              placeholder="Item name (e.g., Milk)"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-            />
-            <select
-              className="input"
-              style={{ maxWidth: 220, height: 44 }}
-              value={newStatus}
-              onChange={(e) => setNewStatus(e.target.value)}
-            >
-              <option value="Fresh">Fresh</option>
-              <option value="Expires tomorrow">Expires tomorrow</option>
-              <option value="Expires today!">Expires today!</option>
-              <option value="Expires in 2 days">Expires in 2 days</option>
-              <option value="Expires in 3 days">Expires in 3 days</option>
-              <option value="Expired">Expired</option>
-            </select>
-            <button type="submit" className="btn">+ Add</button>
-          </form>
+          <div className="card" style={{ padding: '24px', marginBottom: 32 }}>
+            <h2 style={{ fontSize: 28, marginTop: 0, marginBottom: 20, color: '#fff' }}>
+              Add New Food Item
+            </h2>
+            <form onSubmit={onSubmitAdd}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
+                
+                {/* Name Input */}
+                <div style={{ position: 'relative' }}>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#86efac' }}>
+                    Item Name
+                  </label>
+                  <input
+                    className="input"
+                    placeholder="e.g., Milk, Tomatoes, Bread"
+                    value={newName}
+                    onChange={(e) => handleNameChange(e.target.value)}
+                    onFocus={() => {
+                      if (newName.trim().length > 0 && filteredSuggestions.length > 0) {
+                        setShowSuggestions(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      // Delay to allow click on suggestion
+                      setTimeout(() => setShowSuggestions(false), 200);
+                    }}
+                    style={{ width: '100%' }}
+                    required
+                  />
+                  
+                  {/* Autocomplete dropdown */}
+                  {showSuggestions && filteredSuggestions.length > 0 && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '100%',
+                      left: 0,
+                      right: 0,
+                      background: 'rgba(255, 255, 255, 0.95)',
+                      borderRadius: 8,
+                      marginTop: 4,
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                      zIndex: 1000,
+                      maxHeight: 200,
+                      overflowY: 'auto'
+                    }}>
+                      {filteredSuggestions.map((food, idx) => (
+                        <div
+                          key={food._id || idx}
+                          onClick={() => selectSuggestion(food)}
+                          style={{
+                            padding: '10px 14px',
+                            cursor: 'pointer',
+                            borderBottom: idx < filteredSuggestions.length - 1 ? '1px solid rgba(0,0,0,0.1)' : 'none',
+                            color: '#333',
+                            fontSize: 14
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(34, 197, 94, 0.1)'}
+                          onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                        >
+                          <div style={{ fontWeight: 600 }}>{food.name}</div>
+                          <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                            {food.category} • {food.defaultWeeks}w {food.defaultDays}d
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Category Dropdown */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#86efac' }}>
+                    Category
+                  </label>
+                  <select
+                    className="input"
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    style={{ width: '100%', height: 44 }}
+                  >
+                    <option value="Produce">Produce</option>
+                    <option value="Dairy">Dairy</option>
+                    <option value="Meat">Meat</option>
+                    <option value="Seafood">Seafood</option>
+                    <option value="Grains">Grains</option>
+                    <option value="Pantry Staples">Pantry Staples</option>
+                    <option value="Frozen">Frozen</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Snacks">Snacks</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+
+                {/* Expiration: Weeks */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#86efac' }}>
+                    Expires in (Weeks)
+                  </label>
+                  <input
+                    type="number"
+                    className="input"
+                    min="0"
+                    max="52"
+                    value={expirationWeeks}
+                    onChange={(e) => setExpirationWeeks(parseInt(e.target.value) || 0)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                {/* Expiration: Days */}
+                <div>
+                  <label style={{ display: 'block', marginBottom: 8, fontSize: 14, fontWeight: 600, color: '#86efac' }}>
+                    + Days
+                  </label>
+                  <input
+                    type="number"
+                    className="input"
+                    min="0"
+                    max="365"
+                    value={expirationDays}
+                    onChange={(e) => setExpirationDays(parseInt(e.target.value) || 0)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+              </div>
+
+              {/* Submit Button */}
+              <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
+                <button 
+                  type="submit" 
+                  className="btn" 
+                  style={{ 
+                    padding: '12px 32px', 
+                    fontSize: 16,
+                    background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                    boxShadow: 'none'
+                  }}
+                >
+                  + Add to Pantry
+                </button>
+              </div>
+            </form>
+          </div>
 
           {/* Full Pantry List */}
           <div style={{ marginTop: 20 }}>
-            <PantryList
+            <MainPantry
               items={filteredPantry}
               sort={sort}
               onSortChange={setSort}

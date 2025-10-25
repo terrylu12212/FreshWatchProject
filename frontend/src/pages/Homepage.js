@@ -90,11 +90,22 @@ const Homepage = () => {
     const q = query.trim().toLowerCase();
     let data = pantry.filter(i => !q || i.name.toLowerCase().includes(q));
     if (sort === 'expiration') {
-      const rank = s =>
-        s === 'Expired' ? 0 :
-        s.startsWith('Expires') ? 1 :
-        2;
-      data = data.slice().sort((a, b) => rank(a.status) - rank(b.status));
+      const daysUntil = (s = '') => {
+        if (s === 'Expired') return -1; // already expired
+        if (s === 'Expires today!') return 0;
+        if (s === 'Expires tomorrow') return 1;
+        const m = s.match(/Expires in (\d+) days?/);
+        if (m) return parseInt(m[1], 10);
+        return 9999; // treat other statuses (e.g., Fresh) as farthest
+      };
+      data = data
+        .slice()
+        .sort((a, b) => {
+          const da = daysUntil(a.status);
+          const db = daysUntil(b.status);
+          if (da !== db) return da - db; // closest first
+          return a.name.localeCompare(b.name);
+        });
     } else {
       data = data.slice().sort((a, b) => a.name.localeCompare(b.name));
     }
