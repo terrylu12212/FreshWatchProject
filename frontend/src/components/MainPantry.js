@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -129,6 +130,8 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
   // Track checked state per item by name (or _id if available)
   const [checkedItems, setCheckedItems] = useState({});
 
+  const navigate = useNavigate();
+
   const handleCheck = (itemKey, checked) => {
     setCheckedItems(prev => ({ ...prev, [itemKey]: checked }));
   };
@@ -208,8 +211,7 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
           onClick={() => {
             if (checkedCount > 0) {
               const checked = getCheckedItems();
-              console.log('Action on checked items:', checked);
-              // Functionality to be added later
+              navigate('/recipes', { state: { items: checked } });
             }
           }}
         >

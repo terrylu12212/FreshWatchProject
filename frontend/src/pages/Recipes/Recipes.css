@@ -1,0 +1,14 @@
+.recipes-page {
+  padding: 28px;
+  max-width: 900px;
+  margin: 32px auto;
+  font-family: Inter, Arial, sans-serif;
+}
+
+.ai-output {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 16px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
