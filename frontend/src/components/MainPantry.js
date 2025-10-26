@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider, IconButton } from '@mui/material';
+import DeleteIcon from '@mui/icons-material/Delete';
 
-function Row({ label, status, checked, onCheckChange }){
+function Row({ label, status, checked, onCheckChange, onDelete }){
   const color = status === "Expired" ? "#ff6b6b" : status.includes("Expires") ? "#ffd966" : "var(--color-muted)";
   
   // Parse expiration from status text
@@ -62,7 +63,7 @@ function Row({ label, status, checked, onCheckChange }){
         </div>
 
         {/* Middle: progress bar fills available space */}
-        <div style={{flex:1}}>
+        <div style={{flex:1, marginRight: 12, position:'relative', zIndex: 0}}>
           <LinearProgress 
             variant="determinate" 
             value={expirationData.percent}
@@ -78,16 +79,34 @@ function Row({ label, status, checked, onCheckChange }){
           />
         </div>
 
-        {/* Right: status */}
-        <div className="row" style={{gap:10, color, minWidth: 180, justifyContent:'flex-end'}}>
-          <span>{status}</span><span aria-hidden>›</span>
+        {/* Right: status + delete */}
+        <div className="row" style={{gap:14, alignItems:'center', minWidth: 220, justifyContent:'flex-end', position:'relative', zIndex:1}}>
+          <span style={{ color }}>{status}</span><span aria-hidden style={{ color }}>›</span>
+          <IconButton
+            aria-label="delete item"
+            onClick={onDelete}
+            size="small"
+            sx={{
+              color: '#ff6b6b',
+              verticalAlign: 'middle',
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              p: 0,
+              flex: '0 0 auto',
+              '&:hover': { color: '#ff4d4d', backgroundColor: 'rgba(255,107,107,0.12)' }
+            }}
+            disableRipple
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
         </div>
       </div>
     </div>
   );
 }
 
-export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery}){
+export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery, onDeleteItem }){
   // Track checked state per item by name (or _id if available)
   const [checkedItems, setCheckedItems] = useState({});
 
@@ -157,6 +176,7 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
                   status={i.status}
                   checked={!!checkedItems[key]}
                   onCheckChange={(checked) => handleCheck(key, checked)}
+                  onDelete={() => onDeleteItem && onDeleteItem(i)}
                 />
                 {idx < items.length - 1 && (
                   <Divider 

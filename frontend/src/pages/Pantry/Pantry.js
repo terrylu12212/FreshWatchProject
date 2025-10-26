@@ -20,51 +20,46 @@ export default function Pantry() {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 
   useEffect(() => {
-    // Seed with same style of dummy data as Homepage
-    setPantry([
-      { name: 'Milk', status: 'Expired' },
-      { name: 'Tomato', status: 'Expires in 2 days' },
-      { name: 'Cheese', status: 'Fresh' },
-      { name: 'Lentils', status: 'Fresh' },
-      { name: 'Yogurt', status: 'Expires tomorrow' },
-      { name: 'Spinach', status: 'Expires today!' },
-      { name: 'Bread', status: 'Expired' },
-      { name: 'Eggs', status: 'Fresh' },
-      { name: 'Apples', status: 'Expires in 5 days' },
-      { name: 'Bananas', status: 'Expires in 1 day' },
-      { name: 'Chicken', status: 'Fresh' },
-      { name: 'Rice', status: 'Fresh' },
-      { name: 'Black Beans', status: 'Fresh' },
-      { name: 'Lettuce', status: 'Expires in 3 days' },
-      { name: 'Carrots', status: 'Fresh' },
-      { name: 'Cucumbers', status: 'Expires in 4 days' },
-      { name: 'Bell Peppers', status: 'Fresh' },
-      { name: 'Onions', status: 'Fresh' },
-      { name: 'Garlic', status: 'Fresh' },
-      { name: 'Potatoes', status: 'Fresh' },
-      { name: 'Oats', status: 'Fresh' },
-      { name: 'Cereal', status: 'Fresh' },
-      { name: 'Tuna', status: 'Expires in 10 days' },
-      { name: 'Salmon', status: 'Expires in 2 days' },
-      { name: 'Beef', status: 'Expires in 3 days' },
-      { name: 'Pork', status: 'Fresh' },
-      { name: 'Tofu', status: 'Expires in 6 days' },
-      { name: 'Tempeh', status: 'Fresh' },
-      { name: 'Broccoli', status: 'Expires in 2 days' },
-      { name: 'Cauliflower', status: 'Fresh' },
-      { name: 'Mushrooms', status: 'Expires tomorrow' },
-      { name: 'Zucchini', status: 'Expires in 5 days' },
-      { name: 'Eggplant', status: 'Fresh' },
-      { name: 'Strawberries', status: 'Expires in 1 day' },
-      { name: 'Blueberries', status: 'Fresh' },
-      { name: 'Grapes', status: 'Expires in 4 days' },
-      { name: 'Oranges', status: 'Fresh' },
-      { name: 'Lemons', status: 'Fresh' },
-      { name: 'Limes', status: 'Fresh' },
-      { name: 'Avocado', status: 'Expires tomorrow' },
-      { name: 'Kale', status: 'Expires in 3 days' },
-    ]);
+    const fetchItems = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:4000/api/items', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          console.error('Failed to fetch items', res.status, t);
+          return;
+        }
+        const items = await res.json();
+        // Map API items to UI shape with status text
+        const mapped = items.map(it => ({
+          _id: it._id,
+          name: it.name,
+          status: computeStatusFromItem(it)
+        }));
+        setPantry(mapped);
+      } catch (e) {
+        console.error('Error fetching items', e);
+      }
+    };
+    fetchItems();
   }, []);
+
+  const computeStatusFromItem = (it) => {
+    if (!it || !it.expirationDate) return 'Fresh';
+    const exp = new Date(it.expirationDate);
+    const today = new Date();
+    // Zero out time for date diff
+    exp.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    const diffMs = exp.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / (1000*60*60*24));
+    if (diffDays < 0) return 'Expired';
+    if (diffDays === 0) return 'Expires today!';
+    if (diffDays === 1) return 'Expires tomorrow';
+    return `Expires in ${diffDays} days`;
+  };
 
   const filteredPantry = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -97,23 +92,19 @@ export default function Pantry() {
     const name = newName.trim();
     if (!name) return;
     
-    // Calculate total days
+    // Calculate expiration date from weeks/days
     const totalDays = (expirationWeeks * 7) + expirationDays;
-    
-    // Generate status text
-    let status = 'Fresh';
-    if (totalDays === 0) {
-      status = 'Expires today!';
-    } else if (totalDays === 1) {
-      status = 'Expires tomorrow';
-    } else if (totalDays > 1) {
-      status = `Expires in ${totalDays} days`;
+    const expDate = new Date();
+    expDate.setHours(0,0,0,0);
+    if (totalDays > 0) {
+      expDate.setDate(expDate.getDate() + totalDays);
     }
-    
-    // Save to backend food template
+
+    // Save template (for autocomplete) and create item in DB
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:4000/api/food-templates', {
+      // Fire-and-forget template save
+      fetch('http://localhost:4000/api/food-templates', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,12 +116,39 @@ export default function Pantry() {
           defaultWeeks: expirationWeeks,
           defaultDays: expirationDays
         })
+      }).catch(()=>{});
+
+      // Create the item
+      const res = await fetch('http://localhost:4000/api/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name,
+          // categoryId can be wired later; leaving undefined for now
+          expirationDate: totalDays > 0 ? expDate.toISOString() : undefined,
+          purchaseDate: new Date().toISOString(),
+          status: 'active'
+        })
       });
+
+      if (res.ok) {
+        const created = await res.json();
+        setPantry(prev => [{
+          _id: created._id,
+          name: created.name,
+          status: computeStatusFromItem(created)
+        }, ...prev]);
+      } else {
+        const t = await res.text();
+        console.error('Failed to create item', res.status, t);
+      }
     } catch (error) {
-      console.error('Failed to save food template:', error);
+      console.error('Failed to create item:', error);
     }
     
-    setPantry(prev => [{ name, status, category: newCategory }, ...prev]);
     setNewName('');
     setNewCategory('Produce');
     setExpirationWeeks(0);
@@ -379,6 +397,28 @@ export default function Pantry() {
               onSortChange={setSort}
               query={query}
               onQuery={setQuery}
+              onDeleteItem={async (item) => {
+                if (!item?._id) {
+                  // Local (non-DB) item — just remove from UI
+                  setPantry(prev => prev.filter(p => (p._id || p.name) !== (item._id || item.name)));
+                  return;
+                }
+                try {
+                  const token = localStorage.getItem('token');
+                  const res = await fetch(`http://localhost:4000/api/items/${item._id}` , {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  if (res.ok) {
+                    setPantry(prev => prev.filter(p => p._id !== item._id));
+                  } else {
+                    const t = await res.text();
+                    console.error('Failed to delete item', res.status, t);
+                  }
+                } catch (e) {
+                  console.error('Error deleting item', e);
+                }
+              }}
             />
           </div>
         </main>
