@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import '../../styles/global.css';
 import Header from '../../components/header.js';
 import MainPantry from '../../components/MainPantry.js';
+import { Dialog, DialogTitle, DialogContent, DialogActions, TextField, Button } from '@mui/material';
 
 export default function Pantry() {
   const [pantry, setPantry] = useState([]);
@@ -36,6 +37,7 @@ export default function Pantry() {
         const mapped = items.map(it => ({
           _id: it._id,
           name: it.name,
+          expirationDate: it.expirationDate,
           status: computeStatusFromItem(it)
         }));
         setPantry(mapped);
@@ -139,6 +141,7 @@ export default function Pantry() {
         setPantry(prev => [{
           _id: created._id,
           name: created.name,
+          expirationDate: created.expirationDate,
           status: computeStatusFromItem(created)
         }, ...prev]);
       } else {
@@ -154,6 +157,63 @@ export default function Pantry() {
     setExpirationWeeks(0);
     setExpirationDays(0);
     setShowSuggestions(false);
+  };
+
+  // Edit dialog state
+  const [editingItem, setEditingItem] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editWeeks, setEditWeeks] = useState(0);
+  const [editDays, setEditDays] = useState(0);
+
+  const openEdit = (item) => {
+    setEditingItem(item);
+    setEditName(item.name || '');
+    // derive days remaining from expirationDate
+    let remaining = 0;
+    if (item.expirationDate) {
+      const exp = new Date(item.expirationDate);
+      const today = new Date();
+      exp.setHours(0,0,0,0);
+      today.setHours(0,0,0,0);
+      remaining = Math.max(0, Math.round((exp.getTime() - today.getTime())/(1000*60*60*24)));
+    }
+    setEditWeeks(Math.floor(remaining/7));
+    setEditDays(remaining % 7);
+  };
+
+  const closeEdit = () => {
+    setEditingItem(null);
+  };
+
+  const saveEdit = async () => {
+    if (!editingItem?._id) return closeEdit();
+    const total = (parseInt(editWeeks)||0)*7 + (parseInt(editDays)||0);
+    const newExp = new Date();
+    newExp.setHours(0,0,0,0);
+    if (total > 0) newExp.setDate(newExp.getDate()+total);
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:4000/api/items/${editingItem._id}`,{
+        method:'PUT',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        body: JSON.stringify({ name: editName.trim(), expirationDate: total>0 ? newExp.toISOString(): undefined })
+      });
+      if (res.ok){
+        const updated = await res.json();
+        setPantry(prev => prev.map(p => p._id === updated._id ? ({
+          _id: updated._id,
+          name: updated.name,
+          expirationDate: updated.expirationDate,
+          status: computeStatusFromItem(updated)
+        }) : p));
+        closeEdit();
+      } else {
+        const t = await res.text();
+        console.error('Failed to update item', res.status, t);
+      }
+    } catch(e){
+      console.error('Error updating item', e);
+    }
   };
 
   // Handle name input change with autocomplete from backend
@@ -397,6 +457,7 @@ export default function Pantry() {
               onSortChange={setSort}
               query={query}
               onQuery={setQuery}
+              onEditItem={openEdit}
               onDeleteItem={async (item) => {
                 if (!item?._id) {
                   // Local (non-DB) item — just remove from UI
@@ -421,6 +482,42 @@ export default function Pantry() {
               }}
             />
           </div>
+        {/* Edit Item Dialog */}
+        {editingItem && (
+          <Dialog open={!!editingItem} onClose={closeEdit} fullWidth maxWidth="sm">
+            <DialogTitle>Edit Item</DialogTitle>
+            <DialogContent dividers>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <TextField
+                    fullWidth
+                    label="Item Name"
+                    value={editName}
+                    onChange={(e)=>setEditName(e.target.value)}
+                  />
+                </div>
+                <TextField
+                  type="number"
+                  label="Expires in (Weeks)"
+                  value={editWeeks}
+                  onChange={(e)=>setEditWeeks(parseInt(e.target.value)||0)}
+                  inputProps={{ min:0, max: 52 }}
+                />
+                <TextField
+                  type="number"
+                  label="+ Days"
+                  value={editDays}
+                  onChange={(e)=>setEditDays(parseInt(e.target.value)||0)}
+                  inputProps={{ min:0, max: 365 }}
+                />
+              </div>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={closeEdit}>Cancel</Button>
+              <Button onClick={saveEdit} variant="contained">Save</Button>
+            </DialogActions>
+          </Dialog>
+        )}
         </main>
       </div>
     </div>

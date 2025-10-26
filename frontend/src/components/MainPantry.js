@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider, IconButton } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 
-function Row({ label, status, checked, onCheckChange, onDelete }){
+function Row({ label, status, checked, onCheckChange, onDelete, onEdit }){
   const color = status === "Expired" ? "#ff6b6b" : status.includes("Expires") ? "#ffd966" : "var(--color-muted)";
   
   // Parse expiration from status text
@@ -79,9 +80,27 @@ function Row({ label, status, checked, onCheckChange, onDelete }){
           />
         </div>
 
-        {/* Right: status + delete */}
-        <div className="row" style={{gap:14, alignItems:'center', minWidth: 220, justifyContent:'flex-end', position:'relative', zIndex:1}}>
+        {/* Right: status + edit + delete */}
+        <div className="row" style={{gap:14, alignItems:'center', minWidth: 240, justifyContent:'flex-end', position:'relative', zIndex:1}}>
           <span style={{ color }}>{status}</span><span aria-hidden style={{ color }}>›</span>
+          <IconButton
+            aria-label="edit item"
+            onClick={onEdit}
+            size="small"
+            sx={{
+              color: 'rgba(255,255,255,0.8)',
+              verticalAlign: 'middle',
+              width: 32,
+              height: 32,
+              borderRadius: '50%',
+              p: 0,
+              flex: '0 0 auto',
+              '&:hover': { color: '#fff', backgroundColor: 'rgba(255,255,255,0.12)' }
+            }}
+            disableRipple
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
           <IconButton
             aria-label="delete item"
             onClick={onDelete}
@@ -106,12 +125,17 @@ function Row({ label, status, checked, onCheckChange, onDelete }){
   );
 }
 
-export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery, onDeleteItem }){
+export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery, onDeleteItem, onEditItem }){
   // Track checked state per item by name (or _id if available)
   const [checkedItems, setCheckedItems] = useState({});
 
   const handleCheck = (itemKey, checked) => {
     setCheckedItems(prev => ({ ...prev, [itemKey]: checked }));
+  };
+
+  const checkedCount = Object.values(checkedItems).filter(Boolean).length;
+  const getCheckedItems = () => {
+    return items.filter(item => checkedItems[item._id || item.name]);
   };
 
   return (
@@ -165,6 +189,34 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
         </div>
       </div>
 
+      <div style={{marginTop: -24}}>
+        <button
+          disabled={checkedCount === 0}
+          style={{
+            padding: '8px 16px',
+            fontSize: 14,
+            background: checkedCount > 0 
+              ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+              : '#666',
+            border: 'none',
+            borderRadius: 8,
+            color: '#fff',
+            fontWeight: 500,
+            cursor: checkedCount > 0 ? 'pointer' : 'not-allowed',
+            opacity: checkedCount > 0 ? 1 : 0.6
+          }}
+          onClick={() => {
+            if (checkedCount > 0) {
+              const checked = getCheckedItems();
+              console.log('Action on checked items:', checked);
+              // Functionality to be added later
+            }
+          }}
+        >
+          Generate Meal Ideas with Checked Items {checkedCount > 0 && `(${checkedCount})`}
+        </button>
+      </div>
+
       <div className="card" style={{marginTop:12}}>
         <div style={{padding:"4px 14px"}}>
           {items.map((i, idx) => {
@@ -176,6 +228,7 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
                   status={i.status}
                   checked={!!checkedItems[key]}
                   onCheckChange={(checked) => handleCheck(key, checked)}
+                  onEdit={() => onEditItem && onEditItem(i)}
                   onDelete={() => onDeleteItem && onDeleteItem(i)}
                 />
                 {idx < items.length - 1 && (

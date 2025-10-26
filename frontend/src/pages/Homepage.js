@@ -22,69 +22,57 @@ const Homepage = () => {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    // Replace with real API calls when you’re ready:
-    // fetch('/api/stats', { headers: { Authorization: `Bearer ${token}` }}).then(r=>r.json()).then(setStats)
-    // fetch('/api/pantry').then(r=>r.json()).then(setPantry)
-    // fetch('/api/recipes?limit=3').then(r=>r.json()).then(setRecipes)
-
+    // Keep existing sample stats/expiring/recipes until their endpoints exist
     setStats({ expiringSoon: 3, fresh: 10, expired: 2 });
-
     setExpiring([
       { name: 'Tomato', note: 'Expires in 2 days', imageSrc: '/images/tomato.png' },
       { name: 'Yogurt', note: 'Expires tomorrow', imageSrc: '/images/yogurt.png' },
       { name: 'Spinach', note: 'Expires today!', imageSrc: '/images/spinach.png' },
     ]);
-
-    setPantry([
-      { name: 'Milk', status: 'Expired' },
-      { name: 'Tomato', status: 'Expires in 2 days' },
-      { name: 'Cheese', status: 'Fresh' },
-      { name: 'Lentils', status: 'Fresh' },
-      { name: 'Yogurt', status: 'Expires tomorrow' },
-      { name: 'Spinach', status: 'Expires today!' },
-      { name: 'Bread', status: 'Expired' },
-      { name: 'Eggs', status: 'Fresh' },
-      { name: 'Apples', status: 'Expires in 5 days' },
-      { name: 'Bananas', status: 'Expires in 1 day' },
-      { name: 'Chicken', status: 'Fresh' },
-      { name: 'Rice', status: 'Fresh' },
-      { name: 'Black Beans', status: 'Fresh' },
-      { name: 'Lettuce', status: 'Expires in 3 days' },
-      { name: 'Carrots', status: 'Fresh' },
-      { name: 'Cucumbers', status: 'Expires in 4 days' },
-      { name: 'Bell Peppers', status: 'Fresh' },
-      { name: 'Onions', status: 'Fresh' },
-      { name: 'Garlic', status: 'Fresh' },
-      { name: 'Potatoes', status: 'Fresh' },
-      { name: 'Oats', status: 'Fresh' },
-      { name: 'Cereal', status: 'Fresh' },
-      { name: 'Tuna', status: 'Expires in 10 days' },
-      { name: 'Salmon', status: 'Expires in 2 days' },
-      { name: 'Beef', status: 'Expires in 3 days' },
-      { name: 'Pork', status: 'Fresh' },
-      { name: 'Tofu', status: 'Expires in 6 days' },
-      { name: 'Tempeh', status: 'Fresh' },
-      { name: 'Broccoli', status: 'Expires in 2 days' },
-      { name: 'Cauliflower', status: 'Fresh' },
-      { name: 'Mushrooms', status: 'Expires tomorrow' },
-      { name: 'Zucchini', status: 'Expires in 5 days' },
-      { name: 'Eggplant', status: 'Fresh' },
-      { name: 'Strawberries', status: 'Expires in 1 day' },
-      { name: 'Blueberries', status: 'Fresh' },
-      { name: 'Grapes', status: 'Expires in 4 days' },
-      { name: 'Oranges', status: 'Fresh' },
-      { name: 'Lemons', status: 'Fresh' },
-      { name: 'Limes', status: 'Fresh' },
-      { name: 'Avocado', status: 'Expires tomorrow' },
-      { name: 'Kale', status: 'Expires in 3 days' },
-    ]);
-
     setRecipes([
       { id: 1, title: 'Spinach Omelette', image: '/images/omelette.jpg' },
       { id: 2, title: 'Tomato Pasta', image: '/images/tomato-pasta.jpg' },
       { id: 3, title: 'Tomato Pasta', image: '/images/tomato-pasta-2.jpg' },
     ]);
+
+    const fetchItems = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const res = await fetch('http://localhost:4000/api/items', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          const t = await res.text();
+          console.error('Homepage failed to fetch items', res.status, t);
+          return;
+        }
+        const items = await res.json();
+        const mapped = items.map(it => ({
+          _id: it._id,
+          name: it.name,
+          status: computeStatusFromItem(it)
+        }));
+        setPantry(mapped);
+      } catch (e) {
+        console.error('Homepage error fetching items', e);
+      }
+    };
+    fetchItems();
   }, []);
+
+  const computeStatusFromItem = (it) => {
+    if (!it || !it.expirationDate) return 'Fresh';
+    const exp = new Date(it.expirationDate);
+    const today = new Date();
+    exp.setHours(0,0,0,0);
+    today.setHours(0,0,0,0);
+    const diffMs = exp.getTime() - today.getTime();
+    const diffDays = Math.round(diffMs / (1000*60*60*24));
+    if (diffDays < 0) return 'Expired';
+    if (diffDays === 0) return 'Expires today!';
+    if (diffDays === 1) return 'Expires tomorrow';
+    return `Expires in ${diffDays} days`;
+  };
 
   const filteredPantry = useMemo(() => {
     const q = query.trim().toLowerCase();

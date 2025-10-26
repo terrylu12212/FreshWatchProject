@@ -33,6 +33,7 @@ export default function Header(){
           <strong style={{fontSize:18, color: '#fff'}}>FreshWatch</strong>
         </div>
         <div className="row" style={{gap:20, alignItems: 'center'}}>
+          <a href="/" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Home</a>
           <a href="/pantry" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Pantry</a>
           <a href="/recipes" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Recipes</a>
           <a href="/analytics" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Analytics</a>
