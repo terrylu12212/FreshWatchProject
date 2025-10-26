@@ -22,19 +22,6 @@ const Homepage = () => {
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    // Keep existing sample stats/expiring/recipes until their endpoints exist
-    setStats({ expiringSoon: 3, fresh: 10, expired: 2 });
-    setExpiring([
-      { name: 'Tomato', note: 'Expires in 2 days', imageSrc: '/images/tomato.png' },
-      { name: 'Yogurt', note: 'Expires tomorrow', imageSrc: '/images/yogurt.png' },
-      { name: 'Spinach', note: 'Expires today!', imageSrc: '/images/spinach.png' },
-    ]);
-    setRecipes([
-      { id: 1, title: 'Spinach Omelette', image: '/images/omelette.jpg' },
-      { id: 2, title: 'Tomato Pasta', image: '/images/tomato-pasta.jpg' },
-      { id: 3, title: 'Tomato Pasta', image: '/images/tomato-pasta-2.jpg' },
-    ]);
-
     const fetchItems = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -50,14 +37,80 @@ const Homepage = () => {
         const mapped = items.map(it => ({
           _id: it._id,
           name: it.name,
+          expirationDate: it.expirationDate,
           status: computeStatusFromItem(it)
         }));
         setPantry(mapped);
+
+        // Calculate stats from real items
+        let expiringSoonCount = 0;
+        let freshCount = 0;
+        let expiredCount = 0;
+        
+        // Collect all items with their days until expiration for sorting
+        const itemsWithDays = items.map(it => {
+          const status = computeStatusFromItem(it);
+          let daysUntil = 9999;
+          
+          if (status === 'Expired') {
+            daysUntil = -1;
+          } else if (status === 'Expires today!') {
+            daysUntil = 0;
+          } else if (status === 'Expires tomorrow') {
+            daysUntil = 1;
+          } else if (status.includes('Expires in')) {
+            const match = status.match(/Expires in (\d+) days?/);
+            if (match) daysUntil = parseInt(match[1]);
+          }
+          
+          return { item: it, status, daysUntil };
+        });
+
+        // Sort by soonest expiring first
+        itemsWithDays.sort((a, b) => a.daysUntil - b.daysUntil);
+
+        // Count stats
+        itemsWithDays.forEach(({ status, daysUntil }) => {
+          if (status === 'Expired') {
+            expiredCount++;
+          } else if (daysUntil >= 0 && daysUntil <= 3) {
+            expiringSoonCount++;
+          } else if (daysUntil > 3) {
+            freshCount++;
+          }
+        });
+
+        // Get top 3 closest to expiring items (regardless of fresh/expiring status)
+        const expiringItems = itemsWithDays.slice(0, 3).map(({ item: it, status }) => ({
+          name: it.name,
+          note: status,
+          imageSrc: '/images/placeholder.png'
+        }));
+
+        // Fill remaining slots with empty placeholders if less than 3 items
+        while (expiringItems.length < 3) {
+          expiringItems.push({
+            name: '',
+            note: 'No item',
+            imageSrc: '',
+            isEmpty: true
+          });
+        }
+
+        setStats({ expiringSoon: expiringSoonCount, fresh: freshCount, expired: expiredCount });
+        setExpiring(expiringItems);
       } catch (e) {
         console.error('Homepage error fetching items', e);
       }
     };
     fetchItems();
+
+    // Keep sample recipes until endpoint exists
+    setRecipes([
+      { id: 1, title: 'Spinach Omelette', image: '/images/omelette.jpg' },
+      { id: 2, title: 'Tomato Pasta', image: '/images/tomato-pasta.jpg' },
+      { id: 3, title: 'Tomato Pasta', image: '/images/tomato-pasta-2.jpg' },
+    ]);
   }, []);
 
   const computeStatusFromItem = (it) => {
