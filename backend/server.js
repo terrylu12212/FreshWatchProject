@@ -7,6 +7,7 @@ import itemsRoutes from './routes/items.js'
 import openAIRoutes from './routes/openAI.js'
 import cors from 'cors'
 import helmet from 'helmet'
+import iCalendarRoutes from './routes/iCalendar.js'
 
 // connect to the database
 connectDB();
@@ -34,6 +35,7 @@ app.use('/api/user', userRoutes)
 app.use('/api/food-templates', foodTemplateRoutes)
 app.use('/api/items', itemsRoutes)
 app.use('/api/openAI', openAIRoutes)
+app.use('/api/iCalendar', iCalendarRoutes)
 
 // listen for requests
 const PORT = process.env.PORT || 4000
