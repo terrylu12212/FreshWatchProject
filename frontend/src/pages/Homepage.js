@@ -6,7 +6,7 @@ import StatCard from '../components/Statcard.js';
 import ExpiringGrid from '../components/ExpiringGrid.js';
 import PantryList from '../components/PantryList.js';
 import MealIdeas from '../components/MealIdeas.js';
-
+import ICalendarGenerator from '../components/iCalendarGenerator/ICalendarGenerator.js';
 const Homepage = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -182,7 +182,7 @@ const Homepage = () => {
           color: '#fff'
         }}
       >
-        <main className="container" style={{ marginTop: 4 }}>
+  <main className="container" style={{ marginTop: 4 }}>
           <h1 style={{ fontSize: 45, margin: '20px 0 20px', textAlign: 'center' }}>
             Hi Landon, here's what's fresh<br /> in your pantry today <span role="img" aria-label="leaf">🌿</span>
           </h1>
@@ -205,6 +205,7 @@ const Homepage = () => {
 
           <MealIdeas recipes={recipes} />
         </main>
+          <ICalendarGenerator />
       </div>
     </div>
   );

@@ -19,6 +19,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
+    "ical-generator": "^10.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.1",
     "openai": "^6.7.0",
