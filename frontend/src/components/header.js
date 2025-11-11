@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function Header(){
   const navigate = useNavigate();
@@ -33,11 +33,11 @@ export default function Header(){
           <strong style={{fontSize:18, color: '#fff'}}>FreshWatch</strong>
         </div>
         <div className="row" style={{gap:20, alignItems: 'center'}}>
-          <a href="/" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Home</a>
-          <a href="/pantry" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Pantry</a>
-          <a href="/recipes" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Recipes</a>
-          <a href="/analytics" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Analytics</a>
-          <a href="/settings" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Settings</a>
+          <Link to="/" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Home</Link>
+          <Link to="/pantry" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Pantry</Link>
+          <Link to="/recipes" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Recipes</Link>
+          <Link to="/analytics" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Analytics</Link>
+          <Link to="/settings" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Settings</Link>
           <button 
             onClick={handleLogout}
             style={{

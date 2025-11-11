@@ -4,7 +4,7 @@ import validator from 'validator';
 import jwt from 'jsonwebtoken';
 
 const createToken = (_id) =>
-  jwt.sign({ _id }, process.env.SECRET, { expiresIn: '3d' });
+  jwt.sign({ _id }, process.env.SECRET, { expiresIn: '1d' });
 
 // POST /api/user/signup
 export const signupUser = async (req, res) => {

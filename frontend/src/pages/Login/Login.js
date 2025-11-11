@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./Login.css";
 
 const Login = () => {
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,8 +27,8 @@ const Login = () => {
       if (!res.ok) {
         setEmailError(data.error || "Login failed");
       } else {
-        localStorage.setItem('token', data.token);
-        navigate('/'); // Redirect to main page after login
+  localStorage.setItem('token', data.token);
+  navigate(from, { replace: true }); // Redirect back to intended page
       }
     } catch (err) {
       setEmailError("Network error");
@@ -36,9 +38,9 @@ const Login = () => {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      navigate("/");
+      navigate(from, { replace: true });
     }
-  }, [navigate]);
+  }, [navigate, from]);
 
   return (
     <div className="account-container">

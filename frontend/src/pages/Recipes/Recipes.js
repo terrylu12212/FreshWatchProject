@@ -511,18 +511,21 @@ function SavedMealsSection() {
             onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow='0 12px 24px rgba(0,0,0,0.18)'}}
             onMouseLeave={e=>{e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'}}
           >
-            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:10 }}>
-              <div style={{ fontWeight:700, fontSize:18, lineHeight:1.25, flex:1, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{m.title}</div>
-              <button onClick={()=>remove(idx)} title="Delete"
-                style={{ background:'transparent', border:'none', color:'#ff8c8c', cursor:'pointer', fontWeight:800, fontSize:18, lineHeight:1 }}>×</button>
-            </div>
-            <div style={{ marginTop:10, display:'flex', gap:10 }}>
+            {/* Title */}
+            <div style={{ fontWeight:700, fontSize:18, lineHeight:1.25, display:'-webkit-box', WebkitLineClamp:2, WebkitBoxOrient:'vertical', overflow:'hidden' }}>{m.title}</div>
+            {/* Timestamp */}
+            <div style={{ fontSize:12, opacity:0.6, marginTop:8 }}>Saved {new Date(m.savedAt).toLocaleDateString()}</div>
+            {/* Bottom action bar: View + Delete split full width */}
+            <div style={{ display:'flex', marginTop:'auto', borderTop:'1px solid rgba(255,255,255,0.12)' }}>
               <Button size="small" variant="outlined" onClick={()=>{ setViewing(m); setOpen(true) }}
-                sx={{ borderColor:'rgba(255,255,255,0.35)', color:'#fff', textTransform:'none', fontWeight:600 }}>
+                sx={{ flex:1, borderColor:'rgba(255,255,255,0.35)', color:'#fff', textTransform:'none', fontWeight:600, borderRadius:0, '&:hover':{ borderColor:'#22c55e', background:'rgba(34,197,94,0.12)' } }}>
                 View
               </Button>
+              <Button size="small" variant="outlined" onClick={()=>remove(idx)} title="Delete"
+                sx={{ flex:1, borderColor:'rgba(255,255,255,0.35)', color:'#ff8c8c', textTransform:'none', fontWeight:800, borderRadius:0, '&:hover':{ borderColor:'#ff4d4d', background:'rgba(255,77,77,0.12)' } }}>
+                ×
+              </Button>
             </div>
-            <div style={{ marginTop:'auto', fontSize:12, opacity:0.6 }}>Saved {new Date(m.savedAt).toLocaleDateString()}</div>
           </div>
         ))}
       </div>
