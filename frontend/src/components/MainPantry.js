@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider, IconButton } from '@mui/material';
+import { FormControl, InputLabel, Select, MenuItem, LinearProgress, Divider, IconButton, Tooltip } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-function Row({ label, status, checked, onCheckChange, onDelete, onEdit }){
+function Row({ label, status, checked, onCheckChange, onDelete, onEdit, onConsume }){
   const color = status === "Expired" ? "#ff6b6b" : status.includes("Expires") ? "#ffd966" : "var(--color-muted)";
   
   // Parse expiration from status text
@@ -45,13 +46,19 @@ function Row({ label, status, checked, onCheckChange, onDelete, onEdit }){
   const expirationData = getExpirationData();
   
   return (
-    <div style={{padding:"14px 6px"}}>
-      {/* Single row: checkbox + name | progress bar | status */}
-      <div style={{display:'flex', alignItems:'center', gap:0}}>
-        {/* Left: checkbox + name */}
-        <div style={{display:'flex', alignItems:'center', gap:12, minWidth: 220}}>
-          <input 
-            type="checkbox" 
+    <div style={{ padding: '14px 12px' }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 2fr) minmax(0, 5fr) minmax(0, 2fr)',
+          alignItems: 'center',
+          gap: 16
+        }}
+      >
+        {/* Column 1: checkbox + name (counts as one evenly sized column) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, justifySelf: 'stretch' }}>
+          <input
+            type="checkbox"
             checked={checked}
             onChange={(e) => onCheckChange(e.target.checked)}
             style={{
@@ -61,72 +68,86 @@ function Row({ label, status, checked, onCheckChange, onDelete, onEdit }){
               cursor: 'pointer'
             }}
           />
-          <div style={{fontWeight:600, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis'}}>{label}</div>
+          <div style={{ fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{label}</div>
         </div>
 
-        {/* Middle: progress bar fills available space */}
-        <div style={{flex:1, marginRight: 12, position:'relative', zIndex: 0}}>
-          <LinearProgress 
-            variant="determinate" 
-            value={expirationData.percent}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: 'rgba(0,0,0,0.12)',
-              '& .MuiLinearProgress-bar': {
-                backgroundColor: expirationData.color,
+        {/* Column 2: expiration progress + status (one body) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', justifySelf: 'stretch', minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <LinearProgress
+              variant="determinate"
+              value={expirationData.percent}
+              sx={{
+                height: 6,
                 borderRadius: 3,
-              }
-            }}
-          />
+                backgroundColor: 'rgba(0,0,0,0.12)',
+                '& .MuiLinearProgress-bar': {
+                  backgroundColor: expirationData.color,
+                  borderRadius: 3
+                }
+              }}
+            />
+          </div>
+          <span style={{ color, fontSize: 13, fontWeight: 500, whiteSpace: 'nowrap', flex: '0 0 auto' }}>{status}</span>
         </div>
 
-        {/* Right: status + edit + delete */}
-        <div className="row" style={{gap:14, alignItems:'center', minWidth: 240, justifyContent:'flex-end', position:'relative', zIndex:1}}>
-          <span style={{ color }}>{status}</span><span aria-hidden style={{ color }}>›</span>
-          <IconButton
-            aria-label="edit item"
-            onClick={onEdit}
-            size="small"
-            sx={{
-              color: 'rgba(255,255,255,0.8)',
-              verticalAlign: 'middle',
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              p: 0,
-              flex: '0 0 auto',
-              '&:hover': { color: '#fff', backgroundColor: 'rgba(255,255,255,0.12)' }
-            }}
-            disableRipple
-          >
-            <MoreVertIcon fontSize="small" />
-          </IconButton>
-          <IconButton
-            aria-label="delete item"
-            onClick={onDelete}
-            size="small"
-            sx={{
-              color: '#ff6b6b',
-              verticalAlign: 'middle',
-              width: 32,
-              height: 32,
-              borderRadius: '50%',
-              p: 0,
-              flex: '0 0 auto',
-              '&:hover': { color: '#ff4d4d', backgroundColor: 'rgba(255,107,107,0.12)' }
-            }}
-            disableRipple
-          >
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+        {/* Column 3: three uniform circular icon buttons (consumed, edit, delete) */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-evenly', gap: 8 }}>
+          <Tooltip title="Mark consumed" arrow>
+            <IconButton
+              aria-label="mark consumed"
+              onClick={onConsume}
+              size="small"
+              sx={{
+                color: '#22c55e',
+                width: 32,
+                height: 32,
+                '&:hover': { backgroundColor: 'rgba(34,197,94,0.12)' }
+              }}
+              disableRipple
+            >
+              <CheckCircleIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Edit item" arrow>
+            <IconButton
+              aria-label="edit item"
+              onClick={onEdit}
+              size="small"
+              sx={{
+                color: 'rgba(255,255,255,0.85)',
+                width: 32,
+                height: 32,
+                '&:hover': { color: '#fff', backgroundColor: 'rgba(255,255,255,0.12)' }
+              }}
+              disableRipple
+            >
+              <MoreVertIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Delete item" arrow>
+            <IconButton
+              aria-label="delete item"
+              onClick={onDelete}
+              size="small"
+              sx={{
+                color: '#ff6b6b',
+                width: 32,
+                height: 32,
+                '&:hover': { color: '#ff4d4d', backgroundColor: 'rgba(255,107,107,0.12)' }
+              }}
+              disableRipple
+            >
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </div>
       </div>
     </div>
   );
 }
 
-export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery, onDeleteItem, onEditItem }){
+export default function MainPantry({ items=[] , sort="expiration", onSortChange=()=>{} , query, onQuery, onDeleteItem, onEditItem, onConsumeItem }){
   // Track checked state per item by name (or _id if available)
   const [checkedItems, setCheckedItems] = useState({});
 
@@ -232,6 +253,7 @@ export default function MainPantry({ items=[] , sort="expiration", onSortChange=
                   onCheckChange={(checked) => handleCheck(key, checked)}
                   onEdit={() => onEditItem && onEditItem(i)}
                   onDelete={() => onDeleteItem && onDeleteItem(i)}
+                  onConsume={() => onConsumeItem && onConsumeItem(i)}
                 />
                 {idx < items.length - 1 && (
                   <Divider 

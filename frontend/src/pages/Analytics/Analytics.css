@@ -1,0 +1,29 @@
+.analytics-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  margin-bottom: 32px;
+}
+.metric {
+  background: #1e1f24;
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 90px;
+}
+.metric-label {
+  font-size: 13px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  opacity: .7;
+}
+.metric-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+.metric-hint {
+  font-size: 11px;
+  opacity: .55;
+}

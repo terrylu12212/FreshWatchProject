@@ -33,8 +33,8 @@ export default function Pantry() {
           return;
         }
         const items = await res.json();
-        // Map API items to UI shape with status text
-        const mapped = items.map(it => ({
+        // Only show active items in pantry view
+        const mapped = items.filter(it => it.status === 'active').map(it => ({
           _id: it._id,
           name: it.name,
           expirationDate: it.expirationDate,
@@ -471,6 +471,7 @@ export default function Pantry() {
                     headers: { 'Authorization': `Bearer ${token}` }
                   });
                   if (res.ok) {
+                    // Whether marked expired or deleted, remove from active pantry list
                     setPantry(prev => prev.filter(p => p._id !== item._id));
                   } else {
                     const t = await res.text();
@@ -478,6 +479,25 @@ export default function Pantry() {
                   }
                 } catch (e) {
                   console.error('Error deleting item', e);
+                }
+              }}
+              onConsumeItem={async (item) => {
+                if (!item?._id) return; // only DB items
+                try {
+                  const token = localStorage.getItem('token');
+                  const res = await fetch(`http://localhost:4000/api/items/${item._id}/consume`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  if (res.ok) {
+                    // Remove from active pantry list after consuming
+                    setPantry(prev => prev.filter(p => p._id !== item._id));
+                  } else {
+                    const t = await res.text();
+                    console.error('Failed to consume item', res.status, t);
+                  }
+                } catch (e) {
+                  console.error('Error consuming item', e);
                 }
               }}
             />

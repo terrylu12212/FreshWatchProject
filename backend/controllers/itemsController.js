@@ -18,10 +18,24 @@ export const deleteItem = async (req, res) => {
     const userId = req.userId;
     const { id } = req.params;
 
-    const item = await Item.findOneAndDelete({ _id: id, userID: userId });
+    // First, load the item
+    const item = await Item.findOne({ _id: id, userID: userId });
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    res.status(200).json({ success: true, id });
+    // If the item is expired (by date) or already marked expired, mark as expired instead of deleting
+    const now = Date.now();
+    const isExpiredByDate = item.expirationDate ? (new Date(item.expirationDate).getTime() < now) : false;
+    if (isExpiredByDate || item.status === 'expired') {
+      if (item.status !== 'expired') {
+        item.status = 'expired';
+        await item.save();
+      }
+      return res.status(200).json({ success: true, id: item._id, action: 'marked-expired' });
+    }
+
+    // Otherwise, delete normally
+    await Item.deleteOne({ _id: id, userID: userId });
+    res.status(200).json({ success: true, id, action: 'deleted' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -47,6 +61,22 @@ export const updateItem = async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
     res.status(200).json(item);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// PUT /api/items/:id/consume - mark an item as consumed
+export const consumeItem = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { id } = req.params;
+    const item = await Item.findOne({ _id: id, userID: userId });
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.status === 'consumed') return res.status(200).json({ success: true, id: item._id, action: 'already-consumed' });
+    item.status = 'consumed';
+    await item.save();
+    res.status(200).json({ success: true, id: item._id, action: 'marked-consumed' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

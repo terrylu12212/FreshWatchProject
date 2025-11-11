@@ -5,6 +5,7 @@ import userRoutes from './routes/user.js'
 import foodTemplateRoutes from './routes/foodTemplate.js'
 import itemsRoutes from './routes/items.js'
 import openAIRoutes from './routes/openAI.js'
+import analyticsRoutes from './routes/analytics.js'
 import cors from 'cors'
 import helmet from 'helmet'
 import iCalendarRoutes from './routes/iCalendar.js'
@@ -36,6 +37,7 @@ app.use('/api/food-templates', foodTemplateRoutes)
 app.use('/api/items', itemsRoutes)
 app.use('/api/openAI', openAIRoutes)
 app.use('/api/iCalendar', iCalendarRoutes)
+app.use('/api/analytics', analyticsRoutes)
 
 // listen for requests
 const PORT = process.env.PORT || 4000
