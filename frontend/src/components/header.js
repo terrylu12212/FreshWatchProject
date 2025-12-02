@@ -37,7 +37,6 @@ export default function Header(){
           <Link to="/pantry" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Pantry</Link>
           <Link to="/recipes" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Recipes</Link>
           <Link to="/analytics" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Analytics</Link>
-          <Link to="/settings" style={{color: 'rgba(255,255,255,0.85)', textDecoration: 'none'}}>Settings</Link>
           <button 
             onClick={handleLogout}
             style={{
