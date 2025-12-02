@@ -37,6 +37,7 @@ export default function Pantry() {
         const mapped = items.filter(it => it.status === 'active').map(it => ({
           _id: it._id,
           name: it.name,
+          category: it.category || 'Other',
           expirationDate: it.expirationDate,
           status: computeStatusFromItem(it)
         }));
@@ -83,6 +84,13 @@ export default function Pantry() {
           if (da !== db) return da - db; // closest first
           return a.name.localeCompare(b.name);
         });
+    } else if (sort === 'category') {
+      data = data.slice().sort((a, b) => {
+        const catA = (a.category || 'Other').toLowerCase();
+        const catB = (b.category || 'Other').toLowerCase();
+        if (catA !== catB) return catA.localeCompare(catB);
+        return a.name.localeCompare(b.name);
+      });
     } else {
       data = data.slice().sort((a, b) => a.name.localeCompare(b.name));
     }
@@ -129,7 +137,7 @@ export default function Pantry() {
         },
         body: JSON.stringify({
           name,
-          // categoryId can be wired later; leaving undefined for now
+          category: newCategory,
           expirationDate: totalDays > 0 ? expDate.toISOString() : undefined,
           purchaseDate: new Date().toISOString(),
           status: 'active'
@@ -141,6 +149,7 @@ export default function Pantry() {
         setPantry(prev => [{
           _id: created._id,
           name: created.name,
+          category: created.category || 'Other',
           expirationDate: created.expirationDate,
           status: computeStatusFromItem(created)
         }, ...prev]);
@@ -203,6 +212,7 @@ export default function Pantry() {
         setPantry(prev => prev.map(p => p._id === updated._id ? ({
           _id: updated._id,
           name: updated.name,
+          category: updated.category || 'Other',
           expirationDate: updated.expirationDate,
           status: computeStatusFromItem(updated)
         }) : p));
