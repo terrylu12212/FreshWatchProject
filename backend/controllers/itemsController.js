@@ -46,10 +46,11 @@ export const updateItem = async (req, res) => {
   try {
     const userId = req.userId;
     const { id } = req.params;
-    const { name, expirationDate, status } = req.body || {};
+    const { name, category, expirationDate, status } = req.body || {};
 
     const update = {};
     if (typeof name === 'string') update.name = name.trim();
+    if (typeof category === 'string') update.category = category.trim();
     if (expirationDate !== undefined) update.expirationDate = expirationDate ? new Date(expirationDate) : undefined;
     if (status) update.status = status; // optional, not typically used here
 
@@ -86,12 +87,13 @@ export const consumeItem = async (req, res) => {
 export const createItem = async (req, res) => {
   try {
     const userId = req.userId;
-    const { name, expirationDate, purchaseDate, status } = req.body || {};
+    const { name, category, expirationDate, purchaseDate, status } = req.body || {};
     if (!name) return res.status(400).json({ error: 'name is required' });
 
     const doc = await Item.create({
       userID: userId,
       name: String(name).trim(),
+      category: category ? String(category).trim() : undefined,
       expirationDate: expirationDate ? new Date(expirationDate) : undefined,
       purchaseDate: purchaseDate ? new Date(purchaseDate) : new Date(),
       status: status || 'active',
