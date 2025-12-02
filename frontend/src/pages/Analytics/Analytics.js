@@ -5,6 +5,7 @@ import {
   XAxis, YAxis, Tooltip, Legend,
   LineChart, Line
 } from 'recharts';
+import Header from '../../components/header.js';
 import './Analytics.css';
 
 export default function Analytics() {
@@ -30,15 +31,32 @@ export default function Analytics() {
     })();
   }, []);
 
-  if (loading) return <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>Loading analytics...</div>;
-  if (error) return <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>{String(error)}</div>;
-  if (!data) return <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>No analytics available.</div>;
+  if (loading) return (
+    <div style={{ minHeight: '100vh', background: '#1a2e1a' }}>
+      <Header />
+      <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>Loading analytics...</div>
+    </div>
+  );
+  if (error) return (
+    <div style={{ minHeight: '100vh', background: '#1a2e1a' }}>
+      <Header />
+      <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>{String(error)}</div>
+    </div>
+  );
+  if (!data) return (
+    <div style={{ minHeight: '100vh', background: '#1a2e1a' }}>
+      <Header />
+      <div style={{ paddingTop:80, color:'#fff', textAlign:'center' }}>No analytics available.</div>
+    </div>
+  );
 
   const { summary, weekly } = data;
 
   return (
-    <div style={{ paddingTop: 80, minHeight: '100vh', color: '#fff', maxWidth: 1100, margin: '0 auto', padding: '80px 24px 120px' }}>
-      <h1 style={{ textAlign: 'center', marginBottom: 8 }}>Analytics</h1>
+    <div style={{ minHeight: '100vh', background: '#1a2e1a' }}>
+      <Header />
+      <div style={{ color: '#fff', maxWidth: 1100, margin: '0 auto', padding: '80px 24px 120px' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: 8 }}>Analytics</h1>
       <p style={{ textAlign: 'center', opacity: 0.7, marginBottom: 40 }}>Food efficiency & usage trends</p>
 
       <div className="analytics-grid">
@@ -82,6 +100,7 @@ export default function Analytics() {
           </ResponsiveContainer>
         </div>
       </section>
+      </div>
     </div>
   );
 }

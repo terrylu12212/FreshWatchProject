@@ -180,11 +180,7 @@ export default function Recipes() {
       style={{
         minHeight: '100vh',
         paddingTop: 80,
-        backgroundImage: "url('/images/plantBackground.jpg')",
-        backgroundSize: 'cover',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
+        background: '#1a2e1a'
       }}
     >
       <Header />
